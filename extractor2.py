@@ -51,5 +51,44 @@ def procesar_documento():
     
     try:
         with pdfplumber.open(ARCHIVO_PDF) as pdf:
+            pagina = pdf.pages+[0] #Trabajamos con la primera pagina
+            
+            # Recorremos cada campo definido en tu plantilla
+            for campo, coords in plantilla_factura.items():
+                valor = extraer_campo(pagina, campo, coords)
+                datos_factura[campo] = valor
+                print(f"  > {campo}: {valor}")
+                
+        return datos_factura
+    
+    except Exception as e:
+        print(f"Error abriendo el PDF: {e}")
+        return None
+    
+# --- 3. BLOQUE PRINCIPAL (MAIN) ---
+if __name__ == "__main__":
+    
+    # A. Verificamos que el PDF exista
+    if not os.path.exists(ARCHIVO_PDF):
+        print(f"¡ERROR! No encuentro el archivo '{ARCHIVO_PDF}'")
+    else:
+        # B. Extraemos los datos
+        resultados = procesar_documento()
+        
+        if resultados:
+            print("\n--- Guardando en Excel ---")
+            
+            # C. Creamos el Excel usando Pandas
+            # Pandas necesita una lista de diccionarios (una lista de filas)
+            lista_filas = [resultados]
+            
+            df = pd.DataFrame(lista_filas)
+            
+            try:
+                df.to_excel(ARCHIVO_EXCEL, index=False)
+                print(f"¡Exito Total!")
+                print(f"Los datos se guardaron en: {ARCHIVO_EXCEL}")
+            except PermissionError:
+                print("ERROR: No pude gardar el Excel. ¡Cierra el archivo si lo tienes abierto!")
             
             
